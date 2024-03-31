@@ -1,0 +1,25 @@
+{
+  "name": "restake-contract",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy_merlin_test": "npx hardhat run scripts/deploy.js --network merlin_test",
+    "deploy_merlin_main": "npx hardhat run scripts/deploy.js --network merlin_main",
+    "deploy_bsc_test": "npx hardhat run scripts/deploy.js --network bsc_test",
+    "deploy_local": "npx hardhat run scripts/deploy.js --network local",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.0.4",
+    "hardhat": "^2.20.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "@openzeppelin/contracts-upgradeable": "^5.0.1"
+  }
+}
