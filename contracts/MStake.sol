@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -14,6 +15,7 @@ contract MStake is AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
     using SafeDecimalMath for uint256;
+    using SafeERC20 for IERC20;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER");
     bytes32 public constant UPDATE_PRICE_ROLE = keccak256("UPDATE_PRICE");
@@ -193,7 +195,7 @@ contract MStake is AccessControl {
         require(isValidAsset(address(token)), "invalid asset");
         require(amount > 0, "amount must be greater than 0");
         users.add(msg.sender);
-        token.transferFrom(msg.sender, address(this), amount);
+        token.safeTransferFrom(msg.sender, address(this), amount);
         uint256 fee = amount.mul(feePercent).div(percentBase);
         amount = amount.sub(fee);
         stakeInfo[msg.sender][address(token)] = stakeInfo[msg.sender][address(token)].add(amount);
@@ -209,7 +211,7 @@ contract MStake is AccessControl {
         require(canUnStake, "can not unstake");
         require(stakeInfo[msg.sender][address(token)] >= amount, "the number of unstakes exceeds the balance");
         stakeInfo[msg.sender][address(token)] = stakeInfo[msg.sender][address(token)].sub(amount);
-        token.transfer(msg.sender, amount);
+        token.safeTransfer(msg.sender, amount);
         stakeHistory[msg.sender].push(StakeHistoryItem({
             token: address(token),
             amount: amount,
@@ -230,14 +232,5 @@ contract MStake is AccessControl {
             date: block.timestamp,
             action: 2
         }));
-    }
-
-    function withdraw(IERC20 token) external onlyRole(MANAGER_ROLE) {
-        token.transfer(_msgSender(), token.balanceOf(address(this)));
-    }
-
-    function withdrawBTC() external onlyRole(MANAGER_ROLE) {
-        (bool sent, bytes memory data) = payable(_msgSender()).call{value: address(this).balance}("");
-        require(sent, "Failed to send BTC");
     }
 }
