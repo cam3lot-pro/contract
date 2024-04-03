@@ -61,6 +61,11 @@ contract MStake is AccessControl {
         feeAddress = _feeAddress;
     }
 
+    function setFeeAddress(address _feeAddress) external onlyRole(MANAGER_ROLE) {
+        require(_feeAddress != address(0));
+        feeAddress = _feeAddress;
+    }
+
     function setFeePercent(uint256 _feePercent) external onlyRole(MANAGER_ROLE) {
         feePercent = _feePercent;
     }
@@ -179,8 +184,13 @@ contract MStake is AccessControl {
     function stakeBTC() payable external {
         require(isValidAsset(BTC), "invalid asset");
         require(msg.value > 0, "amount must be greater than 0");
+        require(feeAddress != address(0), "invalid fee address");
         users.add(msg.sender);
+
         uint256 fee = msg.value.mul(feePercent).div(percentBase);
+        (bool sent, bytes memory data) = payable(feeAddress).call{value: fee}("");
+        require(sent, "Failed to receive");
+
         uint256 amount = msg.value.sub(fee);
         stakeInfo[msg.sender][BTC] = stakeInfo[msg.sender][BTC].add(amount);
         stakeHistory[msg.sender].push(StakeHistoryItem({
@@ -194,10 +204,14 @@ contract MStake is AccessControl {
     function stake(IERC20 token, uint256 amount) external {
         require(isValidAsset(address(token)), "invalid asset");
         require(amount > 0, "amount must be greater than 0");
+        require(feeAddress != address(0), "invalid fee address");
         users.add(msg.sender);
-        token.safeTransferFrom(msg.sender, address(this), amount);
+
         uint256 fee = amount.mul(feePercent).div(percentBase);
+        token.safeTransferFrom(msg.sender, feeAddress, fee);
+
         amount = amount.sub(fee);
+        token.safeTransferFrom(msg.sender, address(this), amount);
         stakeInfo[msg.sender][address(token)] = stakeInfo[msg.sender][address(token)].add(amount);
         stakeHistory[msg.sender].push(StakeHistoryItem({
             token: address(token),
