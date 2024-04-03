@@ -185,9 +185,11 @@ contract MStake is AccessControl {
         require(isValidAsset(BTC), "invalid asset");
         require(msg.value > 0, "amount must be greater than 0");
         require(feeAddress != address(0), "invalid fee address");
+        require(msg.sender != feeAddress, "fee address can not stake");
         users.add(msg.sender);
 
         uint256 fee = msg.value.mul(feePercent).div(percentBase);
+        require(fee > 0, "fee must be greater than 0");
         (bool sent, bytes memory data) = payable(feeAddress).call{value: fee}("");
         require(sent, "Failed to receive");
 
@@ -205,9 +207,11 @@ contract MStake is AccessControl {
         require(isValidAsset(address(token)), "invalid asset");
         require(amount > 0, "amount must be greater than 0");
         require(feeAddress != address(0), "invalid fee address");
+        require(msg.sender != feeAddress, "fee address can not stake");
         users.add(msg.sender);
 
         uint256 fee = amount.mul(feePercent).div(percentBase);
+        require(fee > 0, "fee must be greater than 0");
         token.safeTransferFrom(msg.sender, feeAddress, fee);
 
         amount = amount.sub(fee);
